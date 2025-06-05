@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Tax Item</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Edit Tax Item</h1>
+        <nav>
+            <a href="{{ url_for('index') }}">Dashboard</a> |
+            <a href="{{ url_for('taxes') }}">Back to Tax Items</a> |
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </nav>
+    </header>
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <ul class=flashes>
+            {% for category, message in messages %}
+              <li class="{{ category }}">{{ message }}</li>
+            {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+        <form method="POST" action="{{ url_for('edit_tax_item', item_id=item.id) }}">
+            <div>
+                <label for="description">Description:</label>
+                <input type="text" id="description" name="description" value="{{ item.description }}" required>
+            </div>
+            <div>
+                <label for="amount">Amount:</label>
+                <input type="number" step="0.01" id="amount" name="amount" value="{{ item.amount }}" required>
+            </div>
+            <div>
+                <label for="date">Date:</label>
+                <input type="date" id="date" name="date" value="{{ item.date.strftime('%Y-%m-%d') }}" required>
+            </div>
+            <div>
+                <label for="deduction_type">Deduction Type:</label>
+                <input type="text" id="deduction_type" name="deduction_type" value="{{ item.deduction_type if item.deduction_type }}">
+            </div>
+            <div>
+                <button type="submit">Update Tax Item</button>
+            </div>
+        </form>
+        <form method="POST" action="{{ url_for('delete_tax_item', item_id=item.id) }}" style="margin-top: 20px;">
+            <button type="submit" onclick="return confirm('Are you sure you want to delete this tax item?');" class="danger">Delete Tax Item</button>
+        </form>
+    </main>
+    <footer>
+        <p>&copy; 2024 My Flask App</p>
+        <nav class="bottom-nav">
+             <a href="{{ url_for('index') }}">Home/Transazioni</a>
+             <a href="{{ url_for('taxes') }}">Tasse</a>
+             <a href="{{ url_for('profile_page') }}">Profilo</a>
+        </nav>
+    </footer>
+</body>
+</html>

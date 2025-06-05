@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Profilo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Profilo Utente</h1>
+        <nav>
+            {% if g.user %}
+                <a href="{{ url_for('index') }}">Dashboard</a> |
+                <a href="{{ url_for('taxes') }}">Tasse</a> |
+                <span>Hello, {{ g.user.username }}!</span>
+                <a href="{{ url_for('logout') }}">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}">Login</a> | <a href="{{ url_for('register') }}">Register</a>
+            {% endif %}
+        </nav>
+    </header>
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <ul class=flashes>
+            {% for category, message in messages %}
+              <li class="{{ category }}">{{ message }}</li>
+            {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+
+        <h2>Profilo</h2>
+        <p>Funzionalità in arrivo.</p>
+        <p>Qui potrai visualizzare e modificare le informazioni del tuo account.</p>
+
+    </main>
+    <footer>
+        <p>&copy; 2024 My Flask App</p>
+        <nav class="bottom-nav">
+             <a href="{{ url_for('index') }}">Home/Transazioni</a>
+             <a href="{{ url_for('taxes') }}">Tasse</a>
+             <a href="{{ url_for('profile_page') }}" class="active">Profilo</a>
+        </nav>
+    </footer>
+</body>
+</html>

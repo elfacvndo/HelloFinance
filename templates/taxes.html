@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tax Items</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Tax Deductible Items</h1>
+        <nav>
+            <a href="{{ url_for('index') }}">Dashboard</a> |
+            {% if g.user %}
+            <span>Hello, {{ g.user.username }}!</span>
+            <a href="{{ url_for('logout') }}">Logout</a>
+            {% else %}
+            <a href="{{ url_for('login') }}">Login</a> | <a href="{{ url_for('register') }}">Register</a>
+            {% endif %}
+        </nav>
+    </header>
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <ul class=flashes>
+            {% for category, message in messages %}
+              <li class="{{ category }}">{{ message }}</li>
+            {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+
+        <h2>Add New Tax Item</h2>
+        <form method="POST" action="{{ url_for('add_tax_item') }}">
+            <div>
+                <label for="description">Description:</label>
+                <input type="text" id="description" name="description" required>
+            </div>
+            <div>
+                <label for="amount">Amount:</label>
+                <input type="number" step="0.01" id="amount" name="amount" required>
+            </div>
+            <div>
+                <label for="date">Date:</label>
+                <input type="date" id="date" name="date" required value="{{ today_date }}">
+            </div>
+            <div>
+                <label for="deduction_type">Deduction Type:</label>
+                <input type="text" id="deduction_type" name="deduction_type">
+            </div>
+            <div>
+                <button type="submit">Add Tax Item</button>
+            </div>
+        </form>
+
+        <h2>Your Tax Items</h2>
+        {% if tax_items %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Amount</th>
+                        <th>Deduction Type</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in tax_items %}
+                    <tr>
+                        <td>{{ item.date.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ item.description }}</td>
+                        <td>{{ "%.2f" | format(item.amount) }}</td>
+                        <td>{{ item.deduction_type }}</td>
+                        <td>
+                            <a href="{{ url_for('edit_tax_item', item_id=item.id) }}">Edit</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No tax items added yet.</p>
+        {% endif %}
+    </main>
+    <footer>
+        <p>&copy; 2024 My Flask App</p>
+        <nav class="bottom-nav">
+             <a href="{{ url_for('index') }}">Home/Transazioni</a>
+             <a href="{{ url_for('taxes') }}" class="active">Tasse</a>
+             <a href="{{ url_for('profile_page') }}">Profilo</a>
+        </nav>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Welcome to My Flask App</h1>
+        <nav>
+            {% if g.user %}
+                <span>Hello, {{ g.user.username }}!</span>
+                <a href="{{ url_for('add_transaction') }}" class="button-plus">+ Add Transaction</a>
+                <a href="{{ url_for('logout') }}">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}">Login</a> | <a href="{{ url_for('register') }}">Register</a>
+            {% endif %}
+        </nav>
+    </header>
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <ul class=flashes>
+            {% for category, message in messages %}
+              <li class="{{ category }}">{{ message }}</li>
+            {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+
+        {% if g.user %}
+            <h2>Your Transactions</h2>
+
+            <div class="filter-buttons">
+                <a href="{{ url_for('index', filter='all') }}" class="button {% if current_filter == 'all' %}active{% endif %}">Tutto</a>
+                <a href="{{ url_for('index', filter='income') }}" class="button {% if current_filter == 'income' %}active{% endif %}">Entrate</a>
+                <a href="{{ url_for('index', filter='expense') }}" class="button {% if current_filter == 'expense' %}active{% endif %}">Spese</a>
+            </div>
+
+            {% if transactions %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in transactions %}
+                        <tr>
+                            <td>{{ transaction.date.strftime('%Y-%m-%d') }}</td>
+                            <td class="{{ transaction.type }}">{{ transaction.type | capitalize }}</td>
+                            <td>{{ transaction.category }}</td>
+                            <td>{{ transaction.description }}</td>
+                            <td>{{ "%.2f" | format(transaction.amount) }}</td>
+                            <td>
+                                <a href="{{ url_for('edit_transaction', transaction_id=transaction.id) }}">Edit</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No transactions yet. <a href="{{ url_for('add_transaction') }}">Add your first one!</a></p>
+            {% endif %}
+        {% else %}
+            <p>This is a simple Flask application. Please log in or register to see more.</p>
+        {% endif %}
+    </main>
+    <footer>
+        <p>&copy; 2024 My Flask App</p>
+        <nav class="bottom-nav">
+             <a href="{{ url_for('index') }}" class="active">Home/Transazioni</a>
+             <a href="{{ url_for('taxes') }}">Tasse</a>
+             <a href="{{ url_for('profile_page') }}">Profilo</a>
+        </nav>
+    </footer>
+</body>
+</html>

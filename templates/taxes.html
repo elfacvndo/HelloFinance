@@ -2,26 +2,62 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Tax Items</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tasse - FinDash</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="" />
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" />
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .flashes { list-style: none; padding: 0; margin: 1em 0; }
+        .flashes li { padding: 0.75em 1.25em; margin-bottom: 1em; border: 1px solid transparent; border-radius: 0.25rem; }
+        .flashes li.success { color: #0f5132; background-color: #d1e7dd; border-color: #badbcc; }
+        .flashes li.danger { color: #842029; background-color: #f8d7da; border-color: #f5c2c7; }
+        /* Header styles */
+        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; background-color: #ffffff; border-bottom: 1px solid #e5e7eb; }
+        .logo { font-size: 1.5rem; font-weight: 700; color: #2563eb; }
+        .main-nav { flex-grow: 1; display: flex; justify-content: flex-start; padding-left: 20px; }
+        .main-nav a { margin-right: 20px; text-decoration: none; color: #4b5563; font-weight: 500; }
+        .main-nav a:hover { color: #2563eb; }
+        .auth-links { display: flex; align-items: center; }
+        .auth-links span { margin-right: 15px; color: #4b5563; font-weight: 500; }
+        .auth-links .login { margin-left:15px; padding: 8px 15px; border-radius: 6px; font-weight: 500; color: #2563eb; border: 1px solid #2563eb; text-decoration:none; }
+        .auth-links .login:hover { background-color: #eff6ff; }
+        /* Bottom Nav styles */
+        .bottom-nav-placeholder { height: 70px; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background-color: #ffffff; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -2px 5px rgba(0,0,0,0.1); }
+        .bottom-nav a { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #6b7280; font-size: 0.75rem; }
+        .bottom-nav a svg { width: 24px; height: 24px; margin-bottom: 4px; }
+        .bottom-nav a.active { color: #2563eb; }
+    </style>
 </head>
-<body>
+<body class="bg-gray-100 text-gray-800">
     <header>
-        <h1>Tax Deductible Items</h1>
-        <nav>
-            <a href="{{ url_for('index') }}">Dashboard</a> |
+        <div class="logo">FinDash</div>
+        <nav class="main-nav">
             {% if g.user %}
-            <span>Hello, {{ g.user.username }}!</span>
-            <a href="{{ url_for('logout') }}">Logout</a>
-            {% else %}
-            <a href="{{ url_for('login') }}">Login</a> | <a href="{{ url_for('register') }}">Register</a>
+            <a href="{{ url_for('index') }}">Dashboard</a>
+            <a href="{{ url_for('transactions_all_page') }}">Tutte le Transazioni</a>
+            <a href="{{ url_for('taxes') }}" class="active">Tasse</a>
+            <a href="{{ url_for('profile_page') }}">Profilo</a>
             {% endif %}
         </nav>
+        <div class="auth-links">
+            {% if g.user %}
+            <span>Ciao, {{ g.user.username }}!</span>
+            <a href="{{ url_for('logout') }}" class="login">Logout</a>
+            {% else %}
+            <a href="{{ url_for('login') }}" class="login">Login</a>
+            {% endif %}
+        </div>
     </header>
-    <main>
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <h1 class="text-2xl font-bold text-gray-700 mb-6">Gestione Tasse</h1>
+
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
-            <ul class=flashes>
+            <ul class="flashes">
             {% for category, message in messages %}
               <li class="{{ category }}">{{ message }}</li>
             {% endfor %}
@@ -29,66 +65,79 @@
           {% endif %}
         {% endwith %}
 
-        <h2>Add New Tax Item</h2>
-        <form method="POST" action="{{ url_for('add_tax_item') }}">
-            <div>
-                <label for="description">Description:</label>
-                <input type="text" id="description" name="description" required>
-            </div>
-            <div>
-                <label for="amount">Amount:</label>
-                <input type="number" step="0.01" id="amount" name="amount" required>
-            </div>
-            <div>
-                <label for="date">Date:</label>
-                <input type="date" id="date" name="date" required value="{{ today_date }}">
-            </div>
-            <div>
-                <label for="deduction_type">Deduction Type:</label>
-                <input type="text" id="deduction_type" name="deduction_type">
-            </div>
-            <div>
-                <button type="submit">Add Tax Item</button>
-            </div>
-        </form>
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Aggiungi Elemento Tassabile</h2>
+            <form method="POST" action="{{ url_for('add_tax_item') }}" class="space-y-4">
+                <div>
+                    <label for="description" class="block text-sm font-medium text-gray-700">Descrizione:</label>
+                    <input type="text" id="description" name="description" required
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50 p-2">
+                </div>
+                <div>
+                    <label for="amount" class="block text-sm font-medium text-gray-700">Importo (€):</label>
+                    <input type="number" step="0.01" id="amount" name="amount" required
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50 p-2">
+                </div>
+                <div>
+                    <label for="date" class="block text-sm font-medium text-gray-700">Data:</label>
+                    <input type="date" id="date" name="date" required value="{{ today_date }}"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50 p-2">
+                </div>
+                <div>
+                    <label for="deduction_type" class="block text-sm font-medium text-gray-700">Tipo Deduzione (es. Sanitaria, Istruzione):</label>
+                    <input type="text" id="deduction_type" name="deduction_type"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50 p-2">
+                </div>
+                <div>
+                    <button type="submit"
+                            class="py-2 px-4 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75">
+                        Aggiungi Elemento
+                    </button>
+                </div>
+            </form>
+        </div>
 
-        <h2>Your Tax Items</h2>
-        {% if tax_items %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Description</th>
-                        <th>Amount</th>
-                        <th>Deduction Type</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in tax_items %}
-                    <tr>
-                        <td>{{ item.date.strftime('%Y-%m-%d') }}</td>
-                        <td>{{ item.description }}</td>
-                        <td>{{ "%.2f" | format(item.amount) }}</td>
-                        <td>{{ item.deduction_type }}</td>
-                        <td>
-                            <a href="{{ url_for('edit_tax_item', item_id=item.id) }}">Edit</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <p>No tax items added yet.</p>
-        {% endif %}
-    </main>
-    <footer>
-        <p>&copy; 2024 My Flask App</p>
-        <nav class="bottom-nav">
-             <a href="{{ url_for('index') }}">Home/Transazioni</a>
-             <a href="{{ url_for('taxes') }}" class="active">Tasse</a>
-             <a href="{{ url_for('profile_page') }}">Profilo</a>
-        </nav>
-    </footer>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">I Tuoi Elementi Tassabili</h2>
+            {% if tax_items %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descrizione</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Importo</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo Deduzione</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for item in tax_items %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ item.date.strftime('%Y-%m-%d') }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ item.description }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">€ {{ "%.2f" | format(item.amount) }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.deduction_type if item.deduction_type else '-' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <a href="{{ url_for('edit_tax_item', item_id=item.id) }}" class="text-indigo-600 hover:text-indigo-900">Modifica</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-gray-500">Nessun elemento tassabile aggiunto finora.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="bottom-nav-placeholder"></div>
+    <nav class="bottom-nav">
+        <a href="{{ url_for('index') }}"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M11.47 3.84a.75.75 0 011.06 0l8.69 8.69a.75.75 0 101.06-1.06l-8.68-8.69a2.25 2.25 0 00-3.182 0l-8.68 8.69a.75.75 0 101.06 1.06l8.69-8.69z"></path><path d="M12 5.432l8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 01-.75-.75v-4.5a.75.75 0 00-.75-.75h-3a.75.75 0 00-.75.75V21a.75.75 0 01-.75.75H5.625a1.875 1.875 0 01-1.875-1.875v-6.198a2.29 2.29 0 00.091-.086L12 5.43z"></path></svg> <span>Home</span></a>
+        <a href="{{ url_for('add_transaction') }}"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 9a.75.75 0 00-1.5 0v2.25H9a.75.75 0 000 1.5h2.25V15a.75.75 0 001.5 0v-2.25H15a.75.75 0 000-1.5h-2.25V9z" clip-rule="evenodd"></path></svg> <span>Aggiungi</span></a>
+        <a href="{{ url_for('taxes') }}" class="active"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z"></path><path d="M22.5 6.908V6.75a3 3 0 00-3-3h-15a3 3 0 00-3 3v.158l9.714 5.978a1.5 1.5 0 001.572 0L22.5 6.908z"></path></svg> <span>Tasse</span></a>
+        <a href="{{ url_for('profile_page') }}"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clip-rule="evenodd"></path></svg> <span>Profilo</span></a>
+    </nav>
 </body>
 </html>

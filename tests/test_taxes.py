@@ -2,15 +2,12 @@ from flask import url_for, session
 from app import TaxItem, User # Assuming these models can be imported
 import datetime
 
-# Helper function to log in a test user (can be shared or redefined if needed)
-# For simplicity, using the one from conftest implicitly via auth_client or creating new users.
-
 def test_taxes_page_loads(auth_client, app):
     with app.app_context():
         response = auth_client.get(url_for('taxes'))
     assert response.status_code == 200
-    assert b"Tax Deductible Items" in response.data
-    assert b"Add New Tax Item" in response.data
+    assert b"Gestione Tasse" in response.data # Updated heading
+    assert b"Aggiungi Elemento Tassabile" in response.data # Updated sub-heading
 
 def test_add_tax_item_success(auth_client, app, db):
     with auth_client.session_transaction() as sess:
@@ -28,7 +25,7 @@ def test_add_tax_item_success(auth_client, app, db):
 
     assert response.status_code == 200
     assert b"Tax item added successfully!" in response.data
-    assert b"Your Tax Items" in response.data
+    assert b"I Tuoi Elementi Tassabili" in response.data # Updated sub-heading on taxes page
 
     with app.app_context():
         item = TaxItem.query.filter_by(user_id=user_id, description='Medical Expense').first()
@@ -40,7 +37,7 @@ def test_add_tax_item_requires_login(client, app):
     with app.app_context():
         response = client.get(url_for('taxes'), follow_redirects=True)
     assert response.status_code == 200
-    assert b"Login</h1>" in response.data
+    assert b"Accedi al tuo account" in response.data # Login page heading
     assert b"Please log in to access this page." in response.data
 
     with app.app_context():
@@ -48,7 +45,7 @@ def test_add_tax_item_requires_login(client, app):
             'description': 'Charity Donation', 'amount': '50', 'date': '2023-01-01', 'deduction_type': 'Charity'
         }, follow_redirects=True)
     assert response.status_code == 200
-    assert b"Login</h1>" in response.data
+    assert b"Accedi al tuo account" in response.data # Login page heading
 
 def test_view_tax_items(auth_client, app, db):
     with auth_client.session_transaction() as sess:
@@ -83,9 +80,9 @@ def test_edit_tax_item_page_loads(auth_client, app, db):
         assert item is not None
         response = auth_client.get(url_for('edit_tax_item', item_id=item.id))
     assert response.status_code == 200
-    assert b"Edit Tax Item" in response.data
-    assert b"Item to Edit Tax" in response.data
-    assert b'99' in response.data
+    assert b"Modifica Elemento Tassabile" in response.data # Updated heading
+    assert b"Item to Edit Tax" in response.data # Check description in form
+    assert b'99' in response.data # Check amount in form
 
 def test_edit_tax_item_success(auth_client, app, db):
     with auth_client.session_transaction() as sess:
@@ -108,7 +105,7 @@ def test_edit_tax_item_success(auth_client, app, db):
     assert response.status_code == 200
     assert b"Tax item updated successfully!" in response.data
     with app.app_context():
-        updated_item = TaxItem.query.get(original_item_id)
+        updated_item = db.session.get(TaxItem, original_item_id) # Updated to db.session.get
         assert updated_item.description == 'Updated Tax Desc'
         assert updated_item.amount == 220
         assert updated_item.deduction_type == 'New Type'
@@ -125,7 +122,7 @@ def test_edit_tax_item_wrong_user(auth_client, client, app, db):
         item_user1 = TaxItem.query.filter_by(user_id=user1_id, description='User1 Tax Item').first()
         assert item_user1 is not None
 
-    with app.app_context():
+    with app.app_context(): # Register and login second user
         client.post(url_for('register'), data={'username': 'tax_user2', 'email': 'tax_user2@example.com', 'password': 'password2'})
         client.post(url_for('login'), data={'email': 'tax_user2@example.com', 'password': 'password2'})
 
@@ -133,7 +130,7 @@ def test_edit_tax_item_wrong_user(auth_client, client, app, db):
         response = client.get(url_for('edit_tax_item', item_id=item_user1.id), follow_redirects=True)
     assert response.status_code == 200
     assert b"You are not authorized to edit this tax item." in response.data
-    assert b"Your Tax Items" in response.data
+    assert b"Gestione Tasse" in response.data # Redirected to taxes page, check heading
 
     with app.app_context():
         response = client.post(url_for('edit_tax_item', item_id=item_user1.id), data={
@@ -142,7 +139,7 @@ def test_edit_tax_item_wrong_user(auth_client, client, app, db):
     assert response.status_code == 200
     assert b"You are not authorized to edit this tax item." in response.data
     with app.app_context():
-        item_still_user1 = TaxItem.query.get(item_user1.id)
+        item_still_user1 = db.session.get(TaxItem, item_user1.id) # Updated to db.session.get
         assert item_still_user1.description == 'User1 Tax Item'
         assert item_still_user1.amount == 70
 
@@ -162,7 +159,7 @@ def test_delete_tax_item_success(auth_client, app, db):
     assert response.status_code == 200
     assert b"Tax item deleted successfully!" in response.data
     with app.app_context():
-        deleted_item = TaxItem.query.get(item_id_to_delete)
+        deleted_item = db.session.get(TaxItem, item_id_to_delete) # Updated to db.session.get
         assert deleted_item is None
 
 def test_delete_tax_item_wrong_user(auth_client, client, app, db):
@@ -175,7 +172,7 @@ def test_delete_tax_item_wrong_user(auth_client, client, app, db):
         item_user1 = TaxItem.query.filter_by(user_id=user1_id, description='U1 Tax Del').first()
         assert item_user1 is not None
 
-    with app.app_context():
+    with app.app_context(): # Register and login second user
         client.post(url_for('register'), data={'username': 'tax_user3', 'email': 'tax_user3@example.com', 'password': 'password3'})
         client.post(url_for('login'), data={'email': 'tax_user3@example.com', 'password': 'password3'})
 
@@ -184,5 +181,5 @@ def test_delete_tax_item_wrong_user(auth_client, client, app, db):
     assert response.status_code == 200
     assert b"You are not authorized to delete this tax item." in response.data
     with app.app_context():
-        item_still_exists = TaxItem.query.get(item_user1.id)
+        item_still_exists = db.session.get(TaxItem, item_user1.id) # Updated to db.session.get
         assert item_still_exists is not None

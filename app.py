@@ -88,7 +88,65 @@ def index():
     #     # return render_template('index.html', transactions=transactions, current_filter=filter_type,
     #     #                        insights=insights_message, forecast=forecast_message)
 
-    return render_template('index.html', transactions=transactions, current_filter=filter_type)
+    # Calculate available balance
+    total_income = db.session.query(func.sum(Transaction.amount)).filter(Transaction.user_id == g.user.id, Transaction.type == 'income').scalar() or 0.0
+    total_expenses = db.session.query(func.sum(Transaction.amount)).filter(Transaction.user_id == g.user.id, Transaction.type == 'expense').scalar() or 0.0
+    available_balance = total_income - total_expenses
+
+    # Calculate today's total expenses
+    today = datetime.date.today()
+    todays_expenses_query = db.session.query(func.sum(Transaction.amount)).filter(
+        Transaction.user_id == g.user.id,
+        Transaction.type == 'expense',
+        Transaction.date == today
+    )
+    todays_total_expenses = todays_expenses_query.scalar() or 0.0
+
+    # Fetch last 4 recent transactions for the specific section in the dashboard
+    recent_transactions = Transaction.query.filter_by(user_id=g.user.id)\
+        .order_by(Transaction.date.desc(), Transaction.id.desc())\
+        .limit(4).all()
+
+    return render_template('index.html',
+                           transactions=transactions, # This is for the main filtered list if used elsewhere or for context
+                           recent_transactions=recent_transactions, # Specifically for the recent items display
+                           current_filter=filter_type,
+                           available_balance=available_balance,
+                           todays_total_expenses=todays_total_expenses)
+
+@app.route('/transactions_all')
+@login_required
+def transactions_all_page():
+    filter_type = request.args.get('filter', 'all')
+    query = Transaction.query.filter_by(user_id=g.user.id)
+
+    if filter_type == 'income':
+        query = query.filter_by(type='income')
+    elif filter_type == 'expense':
+        query = query.filter_by(type='expense')
+
+    all_user_transactions = query.order_by(Transaction.date.desc(), Transaction.id.desc()).all()
+
+    # Group transactions
+    grouped_transactions = {
+        "Oggi": [],
+        "Ieri": [],
+        "Older": []
+    }
+    today = datetime.date.today()
+    yesterday = today - datetime.timedelta(days=1)
+
+    for tx in all_user_transactions:
+        if tx.date == today:
+            grouped_transactions["Oggi"].append(tx)
+        elif tx.date == yesterday:
+            grouped_transactions["Ieri"].append(tx)
+        else:
+            grouped_transactions["Older"].append(tx)
+
+    return render_template('transactions_list.html',
+                           grouped_transactions=grouped_transactions,
+                           current_filter=filter_type)
 
 @app.route('/profile')
 @login_required

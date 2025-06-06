@@ -1,85 +1,244 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flask App</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <header>
-        <h1>Welcome to My Flask App</h1>
-        <nav>
-            {% if g.user %}
-                <span>Hello, {{ g.user.username }}!</span>
-                <a href="{{ url_for('add_transaction') }}" class="button-plus">+ Add Transaction</a>
-                <a href="{{ url_for('logout') }}">Logout</a>
-            {% else %}
-                <a href="{{ url_for('login') }}">Login</a> | <a href="{{ url_for('register') }}">Register</a>
-            {% endif %}
-        </nav>
-    </header>
-    <main>
-        {% with messages = get_flashed_messages(with_categories=true) %}
+<html><head><link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="" /><link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" /><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><style>
+body {
+    font-family: Inter, sans-serif;
+    margin: 0;
+    background-color: #f3f4f6; /* Light gray background */
+    color: #1f2937; /* Dark gray text */
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    background-color: #ffffff; /* White header */
+    border-bottom: 1px solid #e5e7eb; /* Light gray border */
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2563eb; /* Blue logo */
+}
+
+.main-nav { /* Added class for easier targeting if needed */
+    flex-grow: 1; /* Allow main-nav to take up space */
+    display: flex;
+    justify-content: flex-start; /* Align items to the start */
+    padding-left: 20px; /* Add some padding from logo */
+}
+
+.main-nav a {
+    margin-right: 20px; /* Use margin-right for spacing between items */
+    margin-left: 0; /* Reset margin-left if previously set */
+    text-decoration: none;
+    color: #4b5563; /* Medium gray nav links */
+    font-weight: 500;
+}
+
+.main-nav a:hover {
+    color: #2563eb; /* Blue hover */
+}
+
+.auth-links { /* Wrapper for auth links if needed, ensure it's distinct */
+    display: flex; /* Use flexbox for alignment */
+    align-items: center; /* Vertically align items in auth-links */
+}
+
+.auth-links span { /* Style for the greeting message */
+    margin-right: 15px; /* Space between greeting and logout */
+    color: #4b5563;
+    font-weight: 500;
+}
+
+.auth-links a {
+    margin-left: 15px;
+    text-decoration: none;
+    padding: 8px 15px;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.auth-links .login {
+    color: #2563eb;
+    border: 1px solid #2563eb;
+}
+
+.auth-links .login:hover {
+    background-color: #eff6ff; /* Light blue hover */
+}
+
+.auth-links .register {
+    color: #ffffff;
+    background-color: #2563eb; /* Blue background */
+    border: 1px solid #2563eb;
+}
+.auth-links .register:hover {
+    background-color: #1d4ed8; /* Darker blue hover */
+}
+
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.card {
+    background-color: #ffffff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card h2 {
+    margin-top: 0;
+    font-size: 1.25rem;
+    color: #111827; /* Almost black titles */
+}
+
+.transactions-list {
+    list-style: none;
+    padding: 0;
+}
+
+.transactions-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+.transactions-list li:last-child {
+    border-bottom: none;
+}
+
+.transaction-amount.income {
+    color: #16a34a; /* Green for income */
+}
+
+.transaction-amount.expense {
+    color: #dc2626; /* Red for expense */
+}
+
+.filter-buttons {
+    margin-bottom: 15px;
+}
+
+.filter-buttons .button {
+    padding: 8px 15px;
+    margin-right: 10px;
+    border: 1px solid #d1d5db; /* Gray border */
+    border-radius: 6px;
+    background-color: #ffffff;
+    color: #374151; /* Darker gray text */
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.filter-buttons .button.active,
+.filter-buttons .button:hover {
+    background-color: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+}
+
+.add-transaction-btn {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #2563eb;
+    color: #ffffff;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+    margin-top: 15px;
+}
+.add-transaction-btn:hover {
+    background-color: #1d4ed8;
+}
+
+
+/* Bottom Navigation */
+.bottom-nav-placeholder { /* Added placeholder for spacing if needed */
+    height: 70px;
+}
+
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #ffffff;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+}
+
+.bottom-nav a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: #6b7280; /* Icon/Text color */
+    font-size: 0.75rem;
+}
+
+.bottom-nav a svg { /* Basic styling for SVGs */
+    width: 24px;
+    height: 24px;
+    margin-bottom: 4px;
+}
+
+.bottom-nav a.active {
+    color: #2563eb; /* Active link color */
+}
+/* Basic styles for flashed messages */
+.flashes {
+    list-style: none;
+    padding: 0;
+    margin: 1em 0;
+}
+.flashes li {
+    padding: 0.75em 1.25em;
+    margin-bottom: 1em;
+    border: 1px solid transparent;
+    border-radius: 0.25rem;
+}
+.flashes li.success {
+    color: #0f5132;
+    background-color: #d1e7dd;
+    border-color: #badbcc;
+}
+.flashes li.danger {
+    color: #842029;
+    background-color: #f8d7da;
+    border-color: #f5c2c7;
+}
+.flashes li.warning {
+    color: #664d03;
+    background-color: #fff3cd;
+    border-color: #ffecb5;
+}
+.flashes li.info {
+    color: #055160;
+    background-color: #cff4fc;
+    border-color: #b6effb;
+}
+
+<div class="logo">FinDash</div><nav class="main-nav"> {% if g.user %} <a href="{{ url_for('index') }}">Dashboard</a> <a href="{{ url_for('transactions_all_page') }}">Tutte le Transazioni</a> <a href="{{ url_for('taxes') }}">Tasse</a> <a href="{{ url_for('profile_page') }}">Profilo</a> {% endif %} </nav><div class="auth-links"> {% if g.user %} <span>Ciao, {{ g.user.username if g.user else 'Utente' }}!</span> <a href="{{ url_for('logout') }}" class="login">Logout</a> {% else %} <a href="{{ url_for('login') }}" class="login">Login</a> <a href="{{ url_for('register') }}" class="register">Registrati</a> {% endif %} </div></header> <main> {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
-            <ul class=flashes>
+            <ul class="flashes">
             {% for category, message in messages %}
               <li class="{{ category }}">{{ message }}</li>
             {% endfor %}
             </ul>
           {% endif %}
-        {% endwith %}
-
-        {% if g.user %}
-            <h2>Your Transactions</h2>
-
-            <div class="filter-buttons">
-                <a href="{{ url_for('index', filter='all') }}" class="button {% if current_filter == 'all' %}active{% endif %}">Tutto</a>
-                <a href="{{ url_for('index', filter='income') }}" class="button {% if current_filter == 'income' %}active{% endif %}">Entrate</a>
-                <a href="{{ url_for('index', filter='expense') }}" class="button {% if current_filter == 'expense' %}active{% endif %}">Spese</a>
-            </div>
-
-            {% if transactions %}
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Type</th>
-                            <th>Category</th>
-                            <th>Description</th>
-                            <th>Amount</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for transaction in transactions %}
-                        <tr>
-                            <td>{{ transaction.date.strftime('%Y-%m-%d') }}</td>
-                            <td class="{{ transaction.type }}">{{ transaction.type | capitalize }}</td>
-                            <td>{{ transaction.category }}</td>
-                            <td>{{ transaction.description }}</td>
-                            <td>{{ "%.2f" | format(transaction.amount) }}</td>
-                            <td>
-                                <a href="{{ url_for('edit_transaction', transaction_id=transaction.id) }}">Edit</a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <p>No transactions yet. <a href="{{ url_for('add_transaction') }}">Add your first one!</a></p>
-            {% endif %}
-        {% else %}
-            <p>This is a simple Flask application. Please log in or register to see more.</p>
-        {% endif %}
-    </main>
-    <footer>
-        <p>&copy; 2024 My Flask App</p>
-        <nav class="bottom-nav">
-             <a href="{{ url_for('index') }}" class="active">Home/Transazioni</a>
-             <a href="{{ url_for('taxes') }}">Tasse</a>
-             <a href="{{ url_for('profile_page') }}">Profilo</a>
-        </nav>
-    </footer>
-</body>
-</html>
+         {% endwith %} {% if g.user %} <section class="summary-cards dashboard-grid"> <div class="card"><h2>Saldo Attuale</h2><p style="font-size: 2rem; font-weight: 700; color: #2563eb;">€ {{ "%.2f"|format(available_balance if available_balance is defined else 0) }}</p></div><div class="card"><h2>Entrate del Mese</h2><p style="font-size: 1.5rem; color: #16a34a;">€2,500.00</p></div><div class="card"><h2>Spese di Oggi</h2><p style="font-size: 1.5rem; color: #dc2626;">€ {{ "%.2f"|format(todays_total_expenses if todays_total_expenses is defined else 0) }}</p></div></section> <section class="transactions-overview card" style="margin-top: 20px;"><h2>Ultime Transazioni</h2><div class="filter-buttons"><a href="{{ url_for('index', filter='all') }}" class="button {% if current_filter == 'all' %}active{% endif %}">Tutto</a> <a href="{{ url_for('index', filter='income') }}" class="button {% if current_filter == 'income' %}active{% endif %}">Entrate</a> <a href="{{ url_for('index', filter='expense') }}" class="button {% if current_filter == 'expense' %}active{% endif %}">Spese</a></div><ul class="transactions-list"> {% if recent_transactions %} {% for transaction in recent_transactions %} <li> <div style="display: flex; align-items: center;"> <span style="margin-right: 10px;"> <!-- Default ShoppingCart Icon SVG --> <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24" aria-hidden="true"><path d="M2.25 2.25a.75.75 0 000 1.5h1.386c.17 0 .318.114.362.278l2.558 9.592a3.752 3.752 0 00-2.806 3.63c0 .414.336.75.75.75h15.75a.75.75 0 000-1.5H5.378A2.25 2.25 0 017.5 15h11.218a.75.75 0 00.746-.617l2.275-7.963a.75.75 0 00-.746-.883H6.25l-.81-2.427A.75.75 0 004.636 2.25H2.25z"></path></svg> </span> <span>{{ transaction.date.strftime('%d %b %Y') }} - {{ transaction.description if transaction.description else transaction.category }}</span> </div> <span class="transaction-amount {{ transaction.type }}"> {% if transaction.type == 'income' %}+{% else %}-{% endif %}€ {{ "%.2f" | format(transaction.amount) }} <a href="{{ url_for('edit_transaction', transaction_id=transaction.id) }}" style="font-size: 0.8em; margin-left: 10px; text-decoration:none; color: #6b7280;">Modifica</a></span></li> {% endfor %} {% else %} <p>Nessuna transazione trovata. Inizia aggiungendone una!</p>{% endif %} </ul><a href="{{ url_for('add_transaction') }}" class="add-transaction-btn">Aggiungi Transazione</a></section> {% else %} <div class="hero" style="text-align: center; padding: 50px 0;"><h1>Benvenuto su FinDash</h1><p>La tua soluzione semplice per la gestione finanziaria personale.</p><div style="margin-top: 30px;"><a href="{{ url_for('register') }}" class="register" style="padding:12px 25px; font-size: 1.1rem;">Inizia Ora - Registrati</a></div></div>{% endif %} </main></div> <div class="bottom-nav-placeholder"></div><nav class="bottom-nav"> <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.47 3.84a.75.75 0 011.06 0l8.69 8.69a.75.75 0 101.06-1.06l-8.68-8.69a2.25 2.25 0 00-3.182 0l-8.68 8.69a.75.75 0 101.06 1.06l8.69-8.69z"></path><path d="M12 5.432l8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 01-.75-.75v-4.5a.75.75 0 00-.75-.75h-3a.75.75 0 00-.75.75V21a.75.75 0 01-.75.75H5.625a1.875 1.875 0 01-1.875-1.875v-6.198a2.29 2.29 0 00.091-.086L12 5.43z"></path></svg> <span>Home</span> </a> <a href="{{ url_for('add_transaction') }}" class="{% if request.endpoint == 'add_transaction' %}active{% endif %}"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 9a.75.75 0 00-1.5 0v2.25H9a.75.75 0 000 1.5h2.25V15a.75.75 0 001.5 0v-2.25H15a.75.75 0 000-1.5h-2.25V9z" clip-rule="evenodd"></path></svg> <span>Aggiungi</span> </a> <a href="{{ url_for('taxes') }}" class="{% if request.endpoint == 'taxes' %}active{% endif %}"> <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z"></path><path d="M22.5 6.908V6.75a3 3 0 00-3-3h-15a3 3 0 00-3 3v.158l9.714 5.978a1.5 1.5 0 001.572 0L22.5 6.908z"></path></svg> <span>Tasse</span> </a> <a href="{{ url_for('profile_page') }}" class="{% if request.endpoint == 'profile_page' %}active{% endif %}"> <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clip-rule="evenodd"></path></svg> <span>Profilo</span> </a> </nav></body></html>

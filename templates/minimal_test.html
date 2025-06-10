@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Minimal Test Page</title>
+</head>
+<body>
+    <h1>Hello World!</h1>
+    <p>This is a minimal test page.</p>
+    {% if g.user %}
+        <p>User: {{ g.user.username }}</p>
+    {% else %}
+        <p>No user logged in (this shouldn't happen on a protected route).</p>
+    {% endif %}
+    <p>Testing basic variable passing: {{ test_variable|default("Test variable not passed") }}</p>
+</body>
+</html>

@@ -57,62 +57,114 @@ def login_required(f):
 
 @app.before_request
 def load_logged_in_user():
+    app.logger.info("--- load_logged_in_user ---")
     user_id = session.get('user_id')
+    app.logger.info(f"user_id from session: {user_id}")
     if user_id is None:
         g.user = None
+        app.logger.info("g.user set to None (user_id was None).")
     else:
-        g.user = db.session.get(User, user_id)
+        app.logger.info(f"Attempting to fetch user with id: {user_id}")
+        try:
+            retrieved_user = db.session.get(User, user_id)
+            app.logger.info(f"User fetched from DB: {retrieved_user}")
+            g.user = retrieved_user
+        except Exception as e:
+            app.logger.error(f"Error fetching user from DB in load_logged_in_user: {e}", exc_info=True)
+            g.user = None # Ensure g.user is None if there's an error
+    app.logger.info(f"g.user is now: {g.user}")
 
 # --- Routes ---
 @app.route('/')
 @login_required
 def index():
-    # g.user is available thanks to load_logged_in_user
-    filter_type = request.args.get('filter', 'all') # 'all', 'income', 'expense'
+    app.logger.info(f"Simplified index route entered. g.user is: {g.user}, username: {g.user.username if g.user and hasattr(g.user, 'username') else 'No g.user or user has no username'}")
 
-    # Default to transactions view / main dashboard view
-    query = Transaction.query.filter_by(user_id=g.user.id)
-    if filter_type == 'income':
-        query = query.filter_by(type='income')
-    elif filter_type == 'expense':
-        query = query.filter_by(type='expense')
+    # All data calculation logic is commented out as per the subtask.
+    # # g.user is available thanks to load_logged_in_user
+    # # filter_type = request.args.get('filter', 'all') # 'all', 'income', 'expense'
 
-    transactions = query.order_by(Transaction.date.desc()).all()
+    # # # Default to transactions view / main dashboard view
+    # # query = Transaction.query.filter_by(user_id=g.user.id)
+    # # if filter_type == 'income':
+    # #     query = query.filter_by(type='income')
+    # # elif filter_type == 'expense':
+    # #     query = query.filter_by(type='expense')
 
-    # TODO Future: Call AI insights and forecast functions here to display on dashboard.
-    # Example:
-    # if g.user: # Ensure user is logged in
-    #     insights_message = get_spending_insights_ai(g.user.id)
-    #     forecast_message = forecast_spending_ai(g.user.id)
-    #     # Pass insights and forecast to the template:
-    #     # return render_template('index.html', transactions=transactions, current_filter=filter_type,
-    #     #                        insights=insights_message, forecast=forecast_message)
+    # # transactions = query.order_by(Transaction.date.desc()).all()
 
-    # Calculate available balance
-    total_income = db.session.query(func.sum(Transaction.amount)).filter(Transaction.user_id == g.user.id, Transaction.type == 'income').scalar() or 0.0
-    total_expenses = db.session.query(func.sum(Transaction.amount)).filter(Transaction.user_id == g.user.id, Transaction.type == 'expense').scalar() or 0.0
-    available_balance = total_income - total_expenses
+    # # # TODO Future: Call AI insights and forecast functions here to display on dashboard.
+    # # # Example:
+    # # # if g.user: # Ensure user is logged in
+    # # #     insights_message = get_spending_insights_ai(g.user.id)
+    # # #     forecast_message = forecast_spending_ai(g.user.id)
+    # # #     # Pass insights and forecast to the template:
+    # # #     # return render_template('index.html', transactions=transactions, current_filter=filter_type,
+    # # #     #                        insights=insights_message, forecast=forecast_message)
 
-    # Calculate today's total expenses
-    today = datetime.date.today()
-    todays_expenses_query = db.session.query(func.sum(Transaction.amount)).filter(
-        Transaction.user_id == g.user.id,
-        Transaction.type == 'expense',
-        Transaction.date == today
-    )
-    todays_total_expenses = todays_expenses_query.scalar() or 0.0
+    # # app.logger.debug(f"User: {g.user.username if g.user else 'No User'} accessing dashboard")
+    # # app.logger.debug(f"Filter type: {filter_type}")
 
-    # Fetch last 4 recent transactions for the specific section in the dashboard
-    recent_transactions = Transaction.query.filter_by(user_id=g.user.id)\
-        .order_by(Transaction.date.desc(), Transaction.id.desc())\
-        .limit(4).all()
+    # # # Calculate available balance
+    # # total_income = db.session.query(func.sum(Transaction.amount)).filter(Transaction.user_id == g.user.id, Transaction.type == 'income').scalar() or 0.0
+    # # total_expenses = db.session.query(func.sum(Transaction.amount)).filter(Transaction.user_id == g.user.id, Transaction.type == 'expense').scalar() or 0.0
+    # # available_balance = total_income - total_expenses
 
-    return render_template('index.html',
-                           transactions=transactions, # This is for the main filtered list if used elsewhere or for context
-                           recent_transactions=recent_transactions, # Specifically for the recent items display
-                           current_filter=filter_type,
-                           available_balance=available_balance,
-                           todays_total_expenses=todays_total_expenses)
+    # # # Calculate today's total expenses
+    # # today = datetime.date.today()
+    # # todays_expenses_query = db.session.query(func.sum(Transaction.amount)).filter(
+    # #     Transaction.user_id == g.user.id,
+    # #     Transaction.type == 'expense',
+    # #     Transaction.date == today
+    # # )
+    # # todays_total_expenses = todays_expenses_query.scalar() or 0.0
+
+    # # # Fetch last 4 recent transactions for the specific section in the dashboard
+    # # recent_transactions = Transaction.query.filter_by(user_id=g.user.id)\
+    # #     .order_by(Transaction.date.desc(), Transaction.id.desc())\
+    # #     .limit(4).all()
+
+    # # app.logger.debug(f"Available Balance: {available_balance}")
+    # # app.logger.debug(f"Today's Total Expenses: {todays_total_expenses}")
+    # # app.logger.debug(f"Number of transactions for main list (filtered): {len(transactions)}")
+    # # app.logger.debug(f"Number of recent_transactions: {len(recent_transactions)}")
+
+    # # # Prepare context for original template (or for minimal_test.html if it uses them)
+    # # template_context = {
+    # #     'transactions': transactions,
+    # #     'recent_transactions': recent_transactions,
+    # #     'current_filter': filter_type,
+    # #     'available_balance': available_balance,
+    # #     'todays_total_expenses': todays_total_expenses
+    # # }
+
+    try:
+        # The previous step already set the route to render minimal_test.html,
+        # and passed a specific test_variable.
+        # This step is to further simplify by removing other context variables.
+        app.logger.info(f"Attempting to return simple string for user: {g.user.username if g.user and hasattr(g.user, 'username') else 'User info not fully available'}")
+        # The subtask asks for a direct string return, but the previous step used minimal_test.html.
+        # To align with "return f'Index route reached...'", I will change this.
+        # If the intention was to keep minimal_test.html but with even less context, that's also possible.
+        # The instructions say: "The render_template call inside the try block should now be:
+        # `html_output = render_template('minimal_test.html', g=g, test_variable="Simplified Route Works!")`"
+        # This implies still using minimal_test.html.
+        # And then "This ensures that we are testing the most basic response from the index route."
+        # A direct string response is even more basic. I will follow the direct string response instruction.
+
+        user_info = "Unknown User"
+        if g.user and hasattr(g.user, 'username'):
+            user_info = g.user.username
+        elif g.user and hasattr(g.user, 'id'): # Check for id if username is not available
+            user_info = f"User ID {g.user.id} (no username attribute)"
+
+        app.logger.info(f"Returning simple string for user: {user_info}")
+        return f"Index route reached. User: {user_info}. This is a direct string response."
+
+    except Exception as e:
+        app.logger.error(f"Exception in simplified index route: {e}", exc_info=True)
+        # The instruction mentions returning a simple error string for debugging.
+        return f"An error occurred in index: {str(e)}", 500
 
 @app.route('/transactions_all')
 @login_required
@@ -428,9 +480,27 @@ def login():
         user = User.query.filter_by(email=email).first()
 
         if user and check_password_hash(user.password_hash, password):
+            app.logger.info("Login successful. Clearing session...")
+            # session.clear() # Standard practice to clear session before login
+            # app.logger.info("Session cleared.") # session.clear() might be too aggressive if other keys are needed.
+                                            # For now, only user_id is set by this app.
+                                            # If other session keys were used (e.g. CSRF token if forms had it),
+                                            # clearing specific keys is safer: session.pop('user_id', None), session.pop('_csrf_token', None) etc.
+                                            # Given current app, clearing user_id if it exists is sufficient.
+            session.pop('user_id', None) # Clear previous user_id just in case, though usually new login overwrites.
+
+            app.logger.info(f"Setting user_id in session: {user.id}")
             session['user_id'] = user.id
+            app.logger.info(f"Session user_id set to: {session.get('user_id')}")
+
+            app.logger.info("Setting session.permanent = True")
+            session.permanent = True # Example: Make session permanent (cookie based)
+            app.logger.info(f"Session permanent is: {session.permanent}")
+
             flash('Login successful!', 'success')
-            return redirect(url_for('index'))
+            index_url = url_for('index')
+            app.logger.info(f"Redirecting to index page at {index_url}...")
+            return redirect(index_url)
         else:
             flash('Invalid email or password.', 'danger')
             return redirect(url_for('login'))

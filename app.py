@@ -105,10 +105,11 @@ def index():
     # # app.logger.debug(f"User: {g.user.username if g.user else 'No User'} accessing dashboard")
     # # app.logger.debug(f"Filter type: {filter_type}")
 
-    # # # Calculate available balance
-    # # total_income = db.session.query(func.sum(Transaction.amount)).filter(Transaction.user_id == g.user.id, Transaction.type == 'income').scalar() or 0.0
-    # # total_expenses = db.session.query(func.sum(Transaction.amount)).filter(Transaction.user_id == g.user.id, Transaction.type == 'expense').scalar() or 0.0
-    # # available_balance = total_income - total_expenses
+    # Calculate available balance
+    total_income = db.session.query(func.sum(Transaction.amount)).filter(Transaction.user_id == g.user.id, Transaction.type == 'income').scalar() or 0.0
+    total_expenses = db.session.query(func.sum(Transaction.amount)).filter(Transaction.user_id == g.user.id, Transaction.type == 'expense').scalar() or 0.0
+    available_balance = total_income - total_expenses
+    app.logger.debug(f"Calculated available_balance: {available_balance}") # Added log for balance
 
     # # # Calculate today's total expenses
     # # today = datetime.date.today()
@@ -131,22 +132,29 @@ def index():
 
     # # # Prepare context for original template (or for minimal_test.html if it uses them)
     # # template_context = {
-    # #     'transactions': transactions,
-    # #     'recent_transactions': recent_transactions,
-    # #     'current_filter': filter_type,
-    # #     'available_balance': available_balance,
-    # #     'todays_total_expenses': todays_total_expenses
+    # #     'transactions': transactions, # This would be undefined as its calculation is commented
+    # #     'recent_transactions': recent_transactions, # This would be undefined
+    # #     'current_filter': filter_type, # This would be undefined
+    # #     'available_balance': available_balance, # This IS defined now
+    # #     'todays_total_expenses': todays_total_expenses # This would be undefined
     # # }
 
     try:
-        app.logger.info("Attempting to render MAIN index.html with simplified context...")
-        html_output = render_template('index.html',  # Changed to index.html
+        app.logger.info("Attempting to render MAIN index.html with available_balance context...") # Updated log
+        html_output = render_template('index.html',
                                       g=g,
-                                      test_variable="Dashboard with minimal context") # Updated test_variable
-        app.logger.info("render_template('index.html') with simplified context called successfully.") # Updated log
+                                      available_balance=available_balance,
+                                      test_variable="Dashboard with balance", # Updated test_variable
+                                      # Ensure other variables expected by index.html are passed, even if None or empty
+                                      todays_total_expenses=None, # Explicitly pass as None
+                                      recent_transactions=[],     # Explicitly pass as empty list
+                                      transactions=[],            # Explicitly pass as empty list
+                                      current_filter=request.args.get('filter', 'all') # Keep this as it's used by template for button state
+                                     )
+        app.logger.info("render_template('index.html') with available_balance context called successfully.") # Updated log
         return html_output
     except Exception as e:
-        app.logger.error(f"Exception during render_template for MAIN index.html (simplified context): {e}", exc_info=True)
+        app.logger.error(f"Exception during render_template for MAIN index.html (available_balance context): {e}", exc_info=True) # Updated log
         raise
 
 @app.route('/transactions_all')

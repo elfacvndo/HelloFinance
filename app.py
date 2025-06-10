@@ -139,32 +139,16 @@ def index():
     # # }
 
     try:
-        # The previous step already set the route to render minimal_test.html,
-        # and passed a specific test_variable.
-        # This step is to further simplify by removing other context variables.
-        app.logger.info(f"Attempting to return simple string for user: {g.user.username if g.user and hasattr(g.user, 'username') else 'User info not fully available'}")
-        # The subtask asks for a direct string return, but the previous step used minimal_test.html.
-        # To align with "return f'Index route reached...'", I will change this.
-        # If the intention was to keep minimal_test.html but with even less context, that's also possible.
-        # The instructions say: "The render_template call inside the try block should now be:
-        # `html_output = render_template('minimal_test.html', g=g, test_variable="Simplified Route Works!")`"
-        # This implies still using minimal_test.html.
-        # And then "This ensures that we are testing the most basic response from the index route."
-        # A direct string response is even more basic. I will follow the direct string response instruction.
-
-        user_info = "Unknown User"
-        if g.user and hasattr(g.user, 'username'):
-            user_info = g.user.username
-        elif g.user and hasattr(g.user, 'id'): # Check for id if username is not available
-            user_info = f"User ID {g.user.id} (no username attribute)"
-
-        app.logger.info(f"Returning simple string for user: {user_info}")
-        return f"Index route reached. User: {user_info}. This is a direct string response."
-
+        app.logger.info("Attempting to render minimal_test.html for 'index' route.") # Updated log message
+        html_output = render_template('minimal_test.html',
+                                      g=g,
+                                      test_variable="Minimal HTML Page Test")
+        app.logger.info("render_template('minimal_test.html') called successfully.") # Updated log message
+        return html_output
     except Exception as e:
-        app.logger.error(f"Exception in simplified index route: {e}", exc_info=True)
-        # The instruction mentions returning a simple error string for debugging.
-        return f"An error occurred in index: {str(e)}", 500
+        app.logger.error(f"Exception during render_template for minimal_test.html in index route: {e}", exc_info=True)
+        # Re-raise to let Flask handle it, which will show the debugger if app.debug is True
+        raise
 
 @app.route('/transactions_all')
 @login_required

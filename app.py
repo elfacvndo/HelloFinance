@@ -139,15 +139,14 @@ def index():
     # # }
 
     try:
-        app.logger.info("Attempting to render minimal_test.html for 'index' route.") # Updated log message
-        html_output = render_template('minimal_test.html',
+        app.logger.info("Attempting to render MAIN index.html with simplified context...")
+        html_output = render_template('index.html',  # Changed to index.html
                                       g=g,
-                                      test_variable="Minimal HTML Page Test")
-        app.logger.info("render_template('minimal_test.html') called successfully.") # Updated log message
+                                      test_variable="Dashboard with minimal context") # Updated test_variable
+        app.logger.info("render_template('index.html') with simplified context called successfully.") # Updated log
         return html_output
     except Exception as e:
-        app.logger.error(f"Exception during render_template for minimal_test.html in index route: {e}", exc_info=True)
-        # Re-raise to let Flask handle it, which will show the debugger if app.debug is True
+        app.logger.error(f"Exception during render_template for MAIN index.html (simplified context): {e}", exc_info=True)
         raise
 
 @app.route('/transactions_all')
